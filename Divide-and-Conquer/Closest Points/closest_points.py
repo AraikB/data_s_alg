@@ -2,7 +2,6 @@
 from collections import namedtuple
 from itertools import combinations
 from math import sqrt
-import time
 import math
 
 Point = namedtuple('Point', 'x y')
@@ -23,49 +22,54 @@ def minimum_distance_squared_naive(points):
 
 
 def minimum_distance_squared(points):
+    def calc_distance(point_1, point_2):
+        return math.sqrt(((point_2.x - point_1.x)**2) +
+                         ((point_2.y - point_1.y)**2))
 
-    def dist(p1, p2):
-        return math.sqrt(((p2.x - p1.x)**2) +
-                         ((p2.y - p1.y)**2))
+    def bruteForce(points, distance) -> float:
+        '''Brute force function to calculate min distance of size 3 or smaller arrays'''
+        minimum_distance = calc_distance(points[0], points[1])
+        for i,(x,y) in enumerate(points):
+            for j in range(i+1, len(points)):
+                if calc_distance(points[i], points[j]) < minimum_distance:
+                    minimum_distance = calc_distance(points[i], points[j])
 
-    def bruteForce(P, n):
-        min_d = dist(P[0], P[1])
-        for i,(x,y) in enumerate(P):
-            for j in range(i+1, n):
-                if dist(P[i], P[j]) < min_d:
-                    min_d = dist(P[i], P[j])
+        return minimum_distance
 
-        return min_d
-
-    def stripClosest(strip, d):
+    def strip_distance(strip, distance) -> float:
+        '''calculates the dista'''
         lens = len(strip)
         for i in range(lens):
             for j in range(i+1, lens):
-                if (strip[j][1] - strip[i][1]) < d and dist(strip[i], strip[j]) < d:
-                    d = dist(strip[i], strip[j])
-        return d
+                if (strip[j][1] - strip[i][1]) < distance and calc_distance(strip[i], strip[j]) < distance:
+                    distance = calc_distance(strip[i], strip[j])
+        return distance
 
-    def closestUtil(P, n) -> float:
+    def reduce_work(points, lenpoints) -> float:
         '''recursive function which splits the set of points into
-        two halfs and repeats until size 3 or lower and then solves for min
-        distance of each side back up to the desired'''
-        if n <= 3:
-            return bruteForce(P, n)
+        two halves until length of each array is 3 solves and then
+        combined the minimums back into distance which is even
+        further reduced by strip'''
+        if lenpoints <= 3:
+            return bruteForce(points, lenpoints)
+        #split arrays and solve for each half
+        mid = (lenpoints) // 2
+        leftHalf = reduce_work(points[:mid], mid)
+        rightHalf = reduce_work(points[mid:], lenpoints - mid)
 
-        mid = (n) // 2
-
-        dl = closestUtil(P[:mid], mid)
-        dr = closestUtil(P[mid:], n - mid)
-        d = min(dl, dr)
+        #combine results into distance
+        distance = min(leftHalf, rightHalf)
         strip = []
-        for i in range(len(P)):
-            if abs(P[i].x - P[mid].x) < d:
-                strip.append(P[i])
+        for i in range(lenpoints):
+            if abs(points[i].x - points[mid].x) < distance:
+                strip.append(points[i])
+
         strip.sort(key = lambda point: point.y)
-        return min(d, stripClosest(strip, d))
+
+        return min(distance, strip_distance(strip, distance))
 
     points.sort(key = lambda point: point.x)
-    return closestUtil(points, len(points))**2
+    return reduce_work(points, len(points))**2
 
 
 
