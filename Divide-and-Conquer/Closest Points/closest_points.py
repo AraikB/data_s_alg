@@ -37,7 +37,7 @@ def minimum_distance_squared(points):
         return minimum_distance
 
     def strip_distance(strip, distance) -> float:
-        '''calculates the dista'''
+        '''calculates the distance for items within a short distance from mid'''
         lens = len(strip)
         for i in range(lens):
             for j in range(i+1, lens):
